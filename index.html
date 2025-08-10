@@ -6,20 +6,29 @@
 <title>Forex Trading Journal</title>
 <style>
   body {
-    background-color: #0d1117;
-    color: #c9d1d9;
+    background-color: #f4f7fa;
+    color: #333333;
     font-family: Arial, sans-serif;
     margin: 0;
     padding: 20px;
   }
   h1 {
-    color: #58a6ff;
+    color: #0056b3;
     text-align: center;
+  }
+  .top-nav {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 20px;
   }
   .container {
     max-width: 900px;
     margin: auto;
     padding: 20px;
+    background-color: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
   }
   label {
     display: block;
@@ -30,22 +39,22 @@
     padding: 8px;
     margin-top: 5px;
     border-radius: 4px;
-    border: 1px solid #30363d;
-    background-color: #161b22;
-    color: #c9d1d9;
+    border: 1px solid #cccccc;
+    background-color: #ffffff;
+    color: #333333;
   }
   button {
     margin-top: 15px;
     padding: 10px 20px;
     border: none;
     border-radius: 4px;
-    background-color: #238636;
+    background-color: #007bff;
     color: #ffffff;
     cursor: pointer;
     font-size: 16px;
   }
   button:hover {
-    background-color: #2ea043;
+    background-color: #0069d9;
   }
   table {
     width: 100%;
@@ -54,29 +63,33 @@
   }
   th, td {
     padding: 8px;
-    border: 1px solid #30363d;
+    border: 1px solid #dddddd;
     text-align: center;
   }
   th {
-    background-color: #161b22;
+    background-color: #f0f0f0;
   }
   tr:nth-child(even) {
-    background-color: #0d1117;
+    background-color: #fafafa;
   }
   .stats {
     margin-top: 20px;
-    background-color: #161b22;
+    background-color: #f9f9f9;
     padding: 15px;
     border-radius: 8px;
   }
 </style>
 </head>
 <body>
+<nav class="top-nav">
+  <button id="toggleForm">Log Trade</button>
+  <button onclick="clearTrades()">Clear Journal</button>
+</nav>
 <div class="container">
   <h1>Forex Trading Journal</h1>
 
   <h2>Add New Trade</h2>
-  <div id="tradeForm">
+  <div id="tradeForm" style="display:none;">
     <label>Date
       <input type="date" id="tradeDate">
     </label>
@@ -226,6 +239,14 @@ function calculatePL(trade) {
   return profitPerLot * trade.lot;
 }
 
+function clearTrades() {
+  if (confirm('Clear all trades?')) {
+    trades = [];
+    saveTrades();
+    renderTrades();
+  }
+}
+
 function updateStats() {
   const totalTrades = trades.filter(t => t.result !== null).length;
   const wins = trades.filter(t => t.result !== null && t.result > 0).length;
@@ -251,6 +272,11 @@ function calculateLot() {
 
 // initial render
 renderTrades();
+
+document.getElementById('toggleForm').addEventListener('click', () => {
+  const form = document.getElementById('tradeForm');
+  form.style.display = form.style.display === 'none' ? 'block' : 'none';
+});
 </script>
 </body>
 </html>
