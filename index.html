@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Forex Trading Journal</title>
+<style>
+  body {
+    background-color: #0d1117;
+    color: #c9d1d9;
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 20px;
+  }
+  h1 {
+    color: #58a6ff;
+    text-align: center;
+  }
+  .container {
+    max-width: 900px;
+    margin: auto;
+    padding: 20px;
+  }
+  label {
+    display: block;
+    margin-top: 10px;
+  }
+  input, select {
+    width: 100%;
+    padding: 8px;
+    margin-top: 5px;
+    border-radius: 4px;
+    border: 1px solid #30363d;
+    background-color: #161b22;
+    color: #c9d1d9;
+  }
+  button {
+    margin-top: 15px;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    background-color: #238636;
+    color: #ffffff;
+    cursor: pointer;
+    font-size: 16px;
+  }
+  button:hover {
+    background-color: #2ea043;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+  }
+  th, td {
+    padding: 8px;
+    border: 1px solid #30363d;
+    text-align: center;
+  }
+  th {
+    background-color: #161b22;
+  }
+  tr:nth-child(even) {
+    background-color: #0d1117;
+  }
+  .stats {
+    margin-top: 20px;
+    background-color: #161b22;
+    padding: 15px;
+    border-radius: 8px;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>Forex Trading Journal</h1>
+
+  <h2>Add New Trade</h2>
+  <div id="tradeForm">
+    <label>Date
+      <input type="date" id="tradeDate">
+    </label>
+    <label>Pair
+      <select id="tradePair">
+        <option value="EUR/USD">EUR/USD</option>
+        <option value="GBP/USD">GBP/USD</option>
+        <option value="EUR/GBP">EUR/GBP</option>
+      </select>
+    </label>
+    <label>Direction
+      <select id="tradeDirection">
+        <option value="Long">Long</option>
+        <option value="Short">Short</option>
+      </select>
+    </label>
+    <label>Entry Price
+      <input type="number" id="entryPrice" step="0.0001">
+    </label>
+    <label>Stop-Loss Price
+      <input type="number" id="stopPrice" step="0.0001">
+    </label>
+    <label>Take-Profit Price
+      <input type="number" id="takeProfit" step="0.0001">
+    </label>
+    <label>Lot Size
+      <input type="number" id="lotSize" step="0.01" placeholder="0.01">
+    </label>
+    <button onclick="addTrade()">Add Trade</button>
+  </div>
+
+  <h2>Position Size Calculator</h2>
+  <div id="calcForm">
+    <label>Account Size (USD)
+      <input type="number" id="accountSize" step="100" value="10000">
+    </label>
+    <label>Risk Percentage (%)
+      <input type="number" id="riskPercent" step="0.1" value="1">
+    </label>
+    <label>Stop Distance (pips)
+      <input type="number" id="stopPips" step="0.1" value="50">
+    </label>
+    <button onclick="calculateLot()">Calculate Lot Size</button>
+    <p id="lotResult"></p>
+  </div>
+
+  <h2>Trades</h2>
+  <table id="tradesTable">
+    <thead>
+      <tr>
+        <th>Date</th>
+        <th>Pair</th>
+        <th>Direction</th>
+        <th>Entry</th>
+        <th>Stop</th>
+        <th>Take Profit</th>
+        <th>Lot Size</th>
+        <th>Result (P/L)</th>
+        <th>Exit Price</th>
+      </tr>
+    </thead>
+    <tbody id="tradesBody">
+      <!-- rows added dynamically -->
+    </tbody>
+  </table>
+
+  <div class="stats">
+    <h3>Statistics</h3>
+    <p id="statsTotal"></p>
+    <p id="statsWinRate"></p>
+  </div>
+</div>
+<script>
+let trades = JSON.parse(localStorage.getItem('trades') || '[]');
+
+function saveTrades() {
+  localStorage.setItem('trades', JSON.stringify(trades));
+}
+
+function addTrade() {
+  const date = document.getElementById('tradeDate').value;
+  const pair = document.getElementById('tradePair').value;
+  const dir = document.getElementById('tradeDirection').value;
+  const entry = parseFloat(document.getElementById('entryPrice').value);
+  const stop = parseFloat(document.getElementById('stopPrice').value);
+  const takeProfit = parseFloat(document.getElementById('takeProfit').value);
+  const lot = parseFloat(document.getElementById('lotSize').value);
+  if (!date || isNaN(entry) || isNaN(stop) || isNaN(takeProfit) || isNaN(lot)) {
+    alert('Please fill all fields properly.');
+    return;
+  }
+  const trade = { date, pair, dir, entry, stop, takeProfit, lot, exit: null, result: null };
+  trades.push(trade);
+  saveTrades();
+  renderTrades();
+  clearForm();
+}
+
+function clearForm() {
+  document.getElementById('tradeDate').value = '';
+  document.getElementById('entryPrice').value = '';
+  document.getElementById('stopPrice').value = '';
+  document.getElementById('takeProfit').value = '';
+  document.getElementById('lotSize').value = '';
+}
+
+function renderTrades() {
+  const tbody = document.getElementById('tradesBody');
+  tbody.innerHTML = '';
+  trades.forEach((t, index) => {
+    const row = document.createElement('tr');
+    row.innerHTML = `
+      <td>${t.date}</td>
+      <td>${t.pair}</td>
+      <td>${t.dir}</td>
+      <td>${t.entry.toFixed(5)}</td>
+      <td>${t.stop.toFixed(5)}</td>
+      <td>${t.takeProfit.toFixed(5)}</td>
+      <td>${t.lot.toFixed(2)}</td>
+      <td>${t.result !== null ? t.result.toFixed(2) : ''}</td>
+      <td><input type="number" data-index="${index}" value="${t.exit !== null ? t.exit : ''}" step="0.0001" onblur="updateExit(this)"></td>
+    `;
+    tbody.appendChild(row);
+  });
+  updateStats();
+}
+
+function updateExit(input) {
+  const index = parseInt(input.getAttribute('data-index'));
+  const exit = parseFloat(input.value);
+  if (isNaN(exit)) {
+    return;
+  }
+  const t = trades[index];
+  t.exit = exit;
+  t.result = calculatePL(t);
+  saveTrades();
+  renderTrades();
+}
+
+function calculatePL(trade) {
+  const direction = trade.dir;
+  const pipValue = 0.0001; // for these pairs
+  const points = (direction === 'Long') ? (trade.exit - trade.entry) : (trade.entry - trade.exit);
+  const pips = points / pipValue;
+  const profitPerLot = pips * 10; // 1 lot = 10 units per pip
+  return profitPerLot * trade.lot;
+}
+
+function updateStats() {
+  const totalTrades = trades.filter(t => t.result !== null).length;
+  const wins = trades.filter(t => t.result !== null && t.result > 0).length;
+  const totalPL = trades.reduce((acc, t) => acc + (t.result || 0), 0);
+  const winRate = totalTrades > 0 ? ((wins / totalTrades) * 100).toFixed(2) : 0;
+  document.getElementById('statsTotal').textContent = `Total P/L: $${totalPL.toFixed(2)}`;
+  document.getElementById('statsWinRate').textContent = `Win rate: ${winRate}% (${wins}/${totalTrades})`;
+}
+
+function calculateLot() {
+  const accountSize = parseFloat(document.getElementById('accountSize').value);
+  const riskPercent = parseFloat(document.getElementById('riskPercent').value);
+  const stopPips = parseFloat(document.getElementById('stopPips').value);
+  if (isNaN(accountSize) || isNaN(riskPercent) || isNaN(stopPips) || stopPips <= 0) {
+    alert('Please fill the calculator fields correctly.');
+    return;
+  }
+  const riskAmount = accountSize * (riskPercent / 100);
+  // pip value for 1 lot is $10 for USD-based pairs
+  const lotSize = riskAmount / (stopPips * 10);
+  document.getElementById('lotResult').textContent = `Lot size: ${lotSize.toFixed(2)} lots`;
+}
+
+// initial render
+renderTrades();
+</script>
+</body>
+</html>
